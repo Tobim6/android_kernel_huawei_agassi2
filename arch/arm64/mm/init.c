@@ -298,6 +298,17 @@ void __init bootmem_init(void)
 	 */
 	arm64_memory_present();
 
+	/* ========================================================== */
+	/* LINEAGE HACK: SECURE DRM 256MB RAM RESCUE                  */
+	/* ========================================================== */
+	pr_err("LINEAGE HACK: Rescuing 256 MiB of Secure DRM RAM...\n");
+
+	/* Base: 0x48000000 | Size: 0x10000000 (256 MiB) */
+	memblock_add(0x48000000, 0x10000000);
+	memblock_clear_nomap(0x48000000, 0x10000000);
+	memblock_free(0x48000000, 0x10000000);
+	/* ========================================================== */
+
 	sparse_init();
 	zone_sizes_init(min, max);
 
