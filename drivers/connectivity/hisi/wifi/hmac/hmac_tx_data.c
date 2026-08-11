@@ -1743,15 +1743,25 @@ OAL_INLINE oal_uint32  hmac_tx_lan_to_wlan_no_tcp_opt(mac_vap_stru *pst_vap, oal
 
     /* 此处数据可能从内核而来，也有可能由dev报上来再通过空口转出去，注意一下 */
     uc_data_type =  mac_get_data_type_from_8023((oal_uint8 *)oal_netbuf_data(pst_buf), MAC_NETBUFF_PAYLOAD_ETH);
+
     /* 维测，输出一个关键帧打印 */
     if((MAC_DATA_DHCP == uc_data_type) ||
-#if (_PRE_MULTI_CORE_MODE_OFFLOAD_HMAC == _PRE_MULTI_CORE_MODE)
-    (MAC_DATA_ARP_REQ == uc_data_type)||
-    (MAC_DATA_ARP_RSP == uc_data_type) ||
-#endif
-    (MAC_DATA_EAPOL == uc_data_type))
+        #if (_PRE_MULTI_CORE_MODE_OFFLOAD_HMAC == _PRE_MULTI_CORE_MODE)
+        (MAC_DATA_ARP_REQ == uc_data_type)||
+        (MAC_DATA_ARP_RSP == uc_data_type) ||
+        #endif
+        (MAC_DATA_EAPOL == uc_data_type))
     {
         pst_tx_ctl->bit_is_vipframe  = OAL_TRUE;
+
+        /* ------------- ANDROID CUSTOM ROM FIX ------------- */
+        /* Force hardware crypto bypass for EAPOL handshakes */
+        if (MAC_DATA_EAPOL == uc_data_type) {
+            pst_tx_ctl->en_is_eapol = OAL_TRUE;
+            pst_tx_ctl->bit_is_eapol_key_ptk = OAL_TRUE;
+        }
+        /* -------------------------------------------------- */
+
         OAM_WARNING_LOG2(pst_vap->uc_vap_id, OAM_SF_WPA, "{hmac_tx_lan_to_wlan_no_tcp_opt::send datatype==%u, len==%u}[0:dhcp 1:arp_req 2:arp_rsp 3:eapol]", uc_data_type, OAL_NETBUF_LEN(pst_buf));
     }
 
